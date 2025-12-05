@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -17,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: shellcheck
-        uses: reviewdog/action-shellcheck@v1.19
+        uses: reviewdog/action-shellcheck@v1.29
 
   test:
     name: Test setup-postgresql
@@ -26,8 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, ubuntu-20.04, macos-latest, macos-11, macos-13, windows-latest]
-        postgresql_version: [10, 11, 12, 14, 15]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        postgresql_version: [12, 14, 15, 16, 17]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +38,6 @@ jobs:
           postgresql-version: ${{ matrix.postgresql_version }}
       - name: Verify PostgreSQL
         run: |
-          pg_dump --version
-          psql --version
-          pg_restore --version
+          pg_dump --version | grep -q "pg_dump (PostgreSQL) ${{ matrix.postgresql_version }}.*"
+          psql --version | grep -q "psql (PostgreSQL) ${{ matrix.postgresql_version }}.*"
+          pg_restore --version | grep -q "pg_restore (PostgreSQL) ${{ matrix.postgresql_version }}.*"

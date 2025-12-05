@@ -12,9 +12,9 @@ if ! [[ "$INPUT_POSTGRESQL_VERSION" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-# Check if the input is between 10 and 15 (inclusive)
-if (( INPUT_POSTGRESQL_VERSION < 10 || INPUT_POSTGRESQL_VERSION > 15 )); then
-    echo "Error: $INPUT_POSTGRESQL_VERSION is not between 10 and 15 (inclusive)."
+# Check if the input is between 11 and 17 (inclusive)
+if (( INPUT_POSTGRESQL_VERSION < 12 || INPUT_POSTGRESQL_VERSION > 17 )); then
+    echo "Error: $INPUT_POSTGRESQL_VERSION is not between 12 and 17 (inclusive)."
     exit 1
 fi
 
@@ -22,9 +22,10 @@ echo "Validated postgresql version: $INPUT_POSTGRESQL_VERSION"
 
 echo "Installing postgresql..."
 
-echo "OS: $(uname -s)"
+OS=$(uname -s)
+echo "OS: $OS"
 
-if [[ "$(uname -s)" == "Linux" ]]; then
+if [[ "$OS" == "Linux" ]]; then
     # Create the file repository configuration:
     sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 
@@ -36,11 +37,10 @@ if [[ "$(uname -s)" == "Linux" ]]; then
 
     # Install PostgreSQL
     sudo apt-get install -y "postgresql-$INPUT_POSTGRESQL_VERSION"
-elif [[ "$(uname -s)" == "NT"* ]] || [[ "$(uname -s)" == "MINGW"* ]] || [[ "$(uname -s)" == *"MSYS"* ]]; then
+elif [[ "$OS" == "NT"* ]] || [[ "$OS" == "MINGW"* ]] || [[ "$OS" == *"MSYS"* ]]; then
     choco install "postgresql$INPUT_POSTGRESQL_VERSION" -y --no-progress --use-download-cache
-elif [[ "$(uname -s)" == "Darwin" ]]; then
-    brew update
-    brew install "postgresql@$INPUT_POSTGRESQL_VERSION"
+elif [[ "$OS" == "Darwin" ]]; then
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install "postgresql@$INPUT_POSTGRESQL_VERSION"
 else
     echo "Unsupported OS"
     exit 1
@@ -50,12 +50,11 @@ echo "Installed postgresql"
 
 echo "Updating PATH..."
 
-# Verify installation by running pg_dump directly
-if [[ "$(uname -s)" == "NT"* ]] || [[ "$(uname -s)" == "MINGW"* ]] || [[ "$(uname -s)" == *"MSYS"* ]]; then
+if [[ "$OS" == "NT"* ]] || [[ "$OS" == "MINGW"* ]] || [[ "$OS" == *"MSYS"* ]]; then
     # shellcheck disable=SC2028
     echo "C:\\Program Files\\PostgreSQL\\$INPUT_POSTGRESQL_VERSION\\bin" >> "$GITHUB_PATH"
-elif [[ "$(uname -s)" == "Darwin" ]]; then
-    echo "/usr/local/opt/postgresql@${INPUT_POSTGRESQL_VERSION}/bin" >> "$GITHUB_PATH"
+elif [[ "$OS" == "Darwin" ]]; then
+    echo "$(brew --prefix postgresql@"${INPUT_POSTGRESQL_VERSION}")/bin" >> "$GITHUB_PATH"
 else
     echo "/usr/lib/postgresql/$INPUT_POSTGRESQL_VERSION/bin" >> "$GITHUB_PATH"
 fi
